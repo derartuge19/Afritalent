@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Layout } from '../components/layout/Layout';
+import { api } from '../lib/api';
 import { Button } from '../components/common/Button';
 import { Badge } from '../components/common/Badge';
 import {
@@ -9,47 +10,53 @@ import {
   Building2,
   Globe,
   Share2,
-  Bookmark } from
-'lucide-react';
-import { useParams, Link } from 'react-router-dom';
+  Bookmark
+} from
+  'lucide-react';
+import { useParams } from 'react-router-dom';
 export function JobDetailPage() {
   const { id } = useParams();
-  // Mock data - in a real app, fetch based on ID
-  const job = {
-    title: 'Senior Frontend Engineer',
-    company: 'TechAfrica',
-    location: 'Addis Ababa, Ethiopia',
-    salary: '$40k - $60k',
-    type: 'Full-time',
-    posted: '2 days ago',
-    description: `
-      <p>We are looking for an experienced Frontend Engineer to join our growing team. You will be responsible for building high-quality, responsive web applications using React and TypeScript.</p>
-      
-      <h3>Responsibilities</h3>
-      <ul>
-        <li>Develop new user-facing features using React.js</li>
-        <li>Build reusable components and front-end libraries for future use</li>
-        <li>Translate designs and wireframes into high quality code</li>
-        <li>Optimize components for maximum performance across a vast array of web-capable devices and browsers</li>
-      </ul>
+  const [job, setJob] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-      <h3>Requirements</h3>
-      <ul>
-        <li>Strong proficiency in JavaScript, including DOM manipulation and the JavaScript object model</li>
-        <li>Thorough understanding of React.js and its core principles</li>
-        <li>Experience with popular React.js workflows (such as Flux or Redux)</li>
-        <li>Familiarity with newer specifications of EcmaScript</li>
-        <li>Experience with data structure libraries (e.g., Immutable.js)</li>
-      </ul>
-    `,
-    requirements: ['React', 'TypeScript', 'Tailwind CSS', 'Redux', 'Git'],
-    benefits: [
-    'Health Insurance',
-    'Remote Work Options',
-    'Professional Development',
-    'Stock Options']
+  useEffect(() => {
+    const fetchJob = async () => {
+      try {
+        const response = await api.get(`/jobs/${id}`);
+        setJob(response.data);
+      } catch (err) {
+        setError('Failed to load job details');
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  };
+    if (id) {
+      fetchJob();
+    }
+  }, [id]);
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="flex justify-center items-center min-h-screen">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600"></div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (error || !job) {
+    return (
+      <Layout>
+        <div className="flex justify-center items-center min-h-screen">
+          <div className="text-red-600">{error || 'Job not found'}</div>
+        </div>
+      </Layout>
+    );
+  }
   return (
     <Layout>
       <div className="bg-slate-50 min-h-screen pb-12">
@@ -130,11 +137,11 @@ export function JobDetailPage() {
                   Required Skills
                 </h2>
                 <div className="flex flex-wrap gap-2">
-                  {job.requirements.map((req) =>
-                  <Badge
-                    key={req}
-                    variant="secondary"
-                    className="text-sm py-1 px-3">
+                  {job.requirements?.map((req: string) =>
+                    <Badge
+                      key={req}
+                      variant="secondary"
+                      className="text-sm py-1 px-3">
 
                       {req}
                     </Badge>

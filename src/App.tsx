@@ -3,9 +3,12 @@ import {
   BrowserRouter as Router,
   Routes,
   Route,
-  Navigate } from
-'react-router-dom';
+  Navigate
+} from
+  'react-router-dom';
 import { LandingPage } from './pages/LandingPage';
+import { LoginPage } from './pages/auth/LoginPage';
+import { RegisterPage } from './pages/auth/RegisterPage';
 import { JobsPage } from './pages/JobsPage';
 import { JobDetailPage } from './pages/JobDetailPage';
 import { SeekerDashboard } from './pages/SeekerDashboard';
@@ -34,48 +37,61 @@ import { SupplyDemandPage } from './pages/admin/SupplyDemandPage';
 import { ReportsPage } from './pages/admin/ReportsPage';
 import { AdminSettingsPage } from './pages/admin/AdminSettingsPage';
 import { AnimatePresence } from 'framer-motion';
+import { AuthProvider } from './context/AuthContext';
+import { ProtectedRoute } from './components/auth/ProtectedRoute';
 export function App() {
   return (
-    <Router>
-      <AnimatePresence mode="wait">
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/jobs" element={<JobsPage />} />
-          <Route path="/jobs/:id" element={<JobDetailPage />} />
+    <AuthProvider>
+      <Router>
+        <AnimatePresence mode="wait">
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
 
-          {/* Job Seeker Dashboard Routes */}
-          <Route path="/seeker/dashboard" element={<SeekerDashboard />} />
-          <Route path="/seeker/applications" element={<ApplicationsPage />} />
-          <Route path="/seeker/saved" element={<SavedJobsPage />} />
-          <Route path="/seeker/cv-builder" element={<CVBuilderPage />} />
-          <Route path="/seeker/skills" element={<SkillsAnalyticsPage />} />
-          <Route path="/seeker/career" element={<CareerGuidancePage />} />
-          <Route path="/seeker/settings" element={<SeekerSettingsPage />} />
+            {/* Protected Routes - Seeker & Jobs */}
+            <Route element={<ProtectedRoute allowedRoles={['seeker']} />}>
+              <Route path="/jobs" element={<JobsPage />} />
+              <Route path="/jobs/:id" element={<JobDetailPage />} />
+              
+              <Route path="/seeker/dashboard" element={<SeekerDashboard />} />
+              <Route path="/seeker/applications" element={<ApplicationsPage />} />
+              <Route path="/seeker/saved" element={<SavedJobsPage />} />
+              <Route path="/seeker/cv-builder" element={<CVBuilderPage />} />
+              <Route path="/seeker/skills" element={<SkillsAnalyticsPage />} />
+              <Route path="/seeker/career" element={<CareerGuidancePage />} />
+              <Route path="/seeker/settings" element={<SeekerSettingsPage />} />
+            </Route>
 
-          {/* Employer Dashboard Routes */}
-          <Route path="/employer/dashboard" element={<EmployerDashboard />} />
-          <Route path="/employer/post-job" element={<PostJobPage />} />
-          <Route path="/employer/jobs" element={<MyJobsPage />} />
-          <Route path="/employer/candidates" element={<CandidatesPage />} />
-          <Route path="/employer/screening" element={<AIScreeningPage />} />
-          <Route path="/employer/analytics" element={<AnalyticsPage />} />
-          <Route path="/employer/company" element={<CompanyProfilePage />} />
-          <Route path="/employer/settings" element={<SettingsPage />} />
+            {/* Protected Routes - Employer */}
+            <Route element={<ProtectedRoute allowedRoles={['employer']} />}>
+              <Route path="/employer/dashboard" element={<EmployerDashboard />} />
+              <Route path="/employer/post-job" element={<PostJobPage />} />
+              <Route path="/employer/jobs" element={<MyJobsPage />} />
+              <Route path="/employer/candidates" element={<CandidatesPage />} />
+              <Route path="/employer/screening" element={<AIScreeningPage />} />
+              <Route path="/employer/analytics" element={<AnalyticsPage />} />
+              <Route path="/employer/company" element={<CompanyProfilePage />} />
+              <Route path="/employer/settings" element={<SettingsPage />} />
+            </Route>
 
-          {/* Admin Dashboard Routes */}
-          <Route path="/admin/dashboard" element={<AdminDashboard />} />
-          <Route path="/admin/users" element={<UsersPage />} />
-          <Route path="/admin/jobs" element={<JobsManagementPage />} />
-          <Route path="/admin/analytics" element={<MarketAnalyticsPage />} />
-          <Route path="/admin/market" element={<SupplyDemandPage />} />
-          <Route path="/admin/reports" element={<ReportsPage />} />
-          <Route path="/admin/settings" element={<AdminSettingsPage />} />
+            {/* Protected Routes - Admin */}
+            <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
+              <Route path="/admin/dashboard" element={<AdminDashboard />} />
+              <Route path="/admin/users" element={<UsersPage />} />
+              <Route path="/admin/jobs" element={<JobsManagementPage />} />
+              <Route path="/admin/analytics" element={<MarketAnalyticsPage />} />
+              <Route path="/admin/market" element={<SupplyDemandPage />} />
+              <Route path="/admin/reports" element={<ReportsPage />} />
+              <Route path="/admin/settings" element={<AdminSettingsPage />} />
+            </Route>
 
-          {/* Fallback */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </AnimatePresence>
-    </Router>);
+            {/* Fallback */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </AnimatePresence>
+      </Router>
+    </AuthProvider>);
 
 }

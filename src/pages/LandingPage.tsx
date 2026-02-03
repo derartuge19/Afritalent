@@ -4,8 +4,6 @@ import { Button } from '../components/common/Button';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
-  Search,
-  MapPin,
   Briefcase,
   TrendingUp,
   Users,
@@ -15,112 +13,106 @@ import {
   FileText,
   Target,
   GraduationCap,
-  BarChart2,
-  Shield,
-  Zap } from
-'lucide-react';
+  BarChart2
+} from
+  'lucide-react';
 import { JobCard } from '../components/jobs/JobCard';
+import { getJobs } from '../lib/api';
 export function LandingPage() {
   const stats = [
-  {
-    label: 'Jobs Matched',
-    value: '50k+',
-    icon: Briefcase
-  },
-  {
-    label: 'Companies',
-    value: '10k+',
-    icon: BuildingIcon
-  },
-  {
-    label: 'Countries',
-    value: '15+',
-    icon: Globe
-  },
-  {
-    label: 'Success Rate',
-    value: '89%',
-    icon: Target
-  }];
+    {
+      label: 'Jobs Matched',
+      value: '50k+',
+      icon: Briefcase
+    },
+    {
+      label: 'Companies',
+      value: '10k+',
+      icon: BuildingIcon
+    },
+    {
+      label: 'Countries',
+      value: '15+',
+      icon: Globe
+    },
+    {
+      label: 'Success Rate',
+      value: '89%',
+      icon: Target
+    }];
 
-  const featuredJobs = [
-  {
-    id: '1',
-    title: 'Senior Frontend Engineer',
-    company: 'TechAfrica',
-    location: 'Addis Ababa, Ethiopia',
-    salary: '$40k - $60k',
-    type: 'Full-time',
-    posted: '2 days ago',
-    tags: ['React', 'TypeScript', 'Remote'],
-    logoColor: 'bg-primary-600'
-  },
-  {
-    id: '2',
-    title: 'Product Manager',
-    company: 'Safaricom',
-    location: 'Nairobi, Kenya',
-    salary: '$50k - $80k',
-    type: 'Full-time',
-    posted: '1 day ago',
-    tags: ['Product', 'Agile', 'Fintech'],
-    logoColor: 'bg-success-600'
-  },
-  {
-    id: '3',
-    title: 'Data Scientist',
-    company: 'Flutterwave',
-    location: 'Lagos, Nigeria',
-    salary: '$60k - $90k',
-    type: 'Remote',
-    posted: '3 days ago',
-    tags: ['Python', 'ML', 'Big Data'],
-    logoColor: 'bg-accent-600'
-  }];
+  const [featuredJobs, setFeaturedJobs] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    const fetchJobs = async () => {
+      try {
+        const jobs = await getJobs(3);
+        const formattedJobs = jobs.map((job) => ({
+          id: job.id.toString(),
+          title: job.title,
+          company: job.employer?.company_name || 'Unknown Company',
+          location: job.location || 'Remote',
+          salary: job.salary_range || 'Competitive',
+          type: job.job_type || 'Full-time',
+          posted: new Date(job.created_at).toLocaleDateString(),
+          tags: ['Tech', 'Full-time'], // Mock tags for now as backend doesn't support them yet
+          logoColor: 'bg-primary-600' // specific logic for logo color can be added later
+        }));
+        setFeaturedJobs(formattedJobs);
+      } catch (error) {
+        console.error('Failed to fetch jobs:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchJobs();
+  }, []);
 
   const features = [
-  {
-    title: 'AI-Powered Job Matching',
-    description:
-    "Our algorithms analyze your CV and skills to recommend jobs where you're most likely to succeed. Get a capability match score for every application.",
-    icon: Sparkles,
-    color: 'bg-primary-100 text-primary-600'
-  },
-  {
-    title: 'Smart CV Builder',
-    description:
-    'Create professional CVs with modern templates designed for Ethiopian, African, and global markets. AI suggestions for wording and keywords.',
-    icon: FileText,
-    color: 'bg-accent-100 text-accent-600'
-  },
-  {
-    title: 'Skills Analytics',
-    description:
-    'See how your skills compare to market demand. Get personalized recommendations for courses and skill development.',
-    icon: BarChart2,
-    color: 'bg-blue-100 text-blue-600'
-  },
-  {
-    title: 'Career Guidance',
-    description:
-    'Access interview preparation resources, job-specific guidance, and career path recommendations based on your profile.',
-    icon: GraduationCap,
-    color: 'bg-purple-100 text-purple-600'
-  },
-  {
-    title: 'AI Candidate Screening',
-    description:
-    'Employers get automatic ranking, skill gap identification, and trainability scores for junior candidates.',
-    icon: Target,
-    color: 'bg-success-100 text-success-600'
-  },
-  {
-    title: 'Market Intelligence',
-    description:
-    'Access labor market analytics, salary benchmarks, and hiring trends across Africa and beyond.',
-    icon: TrendingUp,
-    color: 'bg-rose-100 text-rose-600'
-  }];
+    {
+      title: 'AI-Powered Job Matching',
+      description:
+        "Our algorithms analyze your CV and skills to recommend jobs where you're most likely to succeed. Get a capability match score for every application.",
+      icon: Sparkles,
+      color: 'bg-primary-100 text-primary-600'
+    },
+    {
+      title: 'Smart CV Builder',
+      description:
+        'Create professional CVs with modern templates designed for Ethiopian, African, and global markets. AI suggestions for wording and keywords.',
+      icon: FileText,
+      color: 'bg-accent-100 text-accent-600'
+    },
+    {
+      title: 'Skills Analytics',
+      description:
+        'See how your skills compare to market demand. Get personalized recommendations for courses and skill development.',
+      icon: BarChart2,
+      color: 'bg-blue-100 text-blue-600'
+    },
+    {
+      title: 'Career Guidance',
+      description:
+        'Access interview preparation resources, job-specific guidance, and career path recommendations based on your profile.',
+      icon: GraduationCap,
+      color: 'bg-purple-100 text-purple-600'
+    },
+    {
+      title: 'AI Candidate Screening',
+      description:
+        'Employers get automatic ranking, skill gap identification, and trainability scores for junior candidates.',
+      icon: Target,
+      color: 'bg-success-100 text-success-600'
+    },
+    {
+      title: 'Market Intelligence',
+      description:
+        'Access labor market analytics, salary benchmarks, and hiring trends across Africa and beyond.',
+      icon: TrendingUp,
+      color: 'bg-rose-100 text-rose-600'
+    }];
 
   return (
     <Layout>
@@ -205,21 +197,19 @@ export function LandingPage() {
             }}
             className="mt-10 flex flex-col sm:flex-row justify-center gap-4">
 
-            <Link to="/jobs">
+            <Link to="/register">
               <Button
                 size="lg"
                 className="w-full sm:w-auto bg-primary-600 hover:bg-primary-500 text-white px-8">
-
-                Find Your Dream Job
+                Sign Up
               </Button>
             </Link>
-            <Link to="/employer/post-job">
+            <Link to="/login">
               <Button
                 size="lg"
                 variant="outline"
                 className="w-full sm:w-auto border-slate-600 text-white hover:bg-slate-800 hover:text-white px-8">
-
-                Post a Job
+                Log In
               </Button>
             </Link>
           </motion.div>
@@ -241,21 +231,21 @@ export function LandingPage() {
             className="mt-20 grid grid-cols-2 gap-4 sm:grid-cols-4 lg:gap-8">
 
             {stats.map((stat, index) =>
-            <motion.div
-              key={stat.label}
-              initial={{
-                opacity: 0,
-                y: 20
-              }}
-              animate={{
-                opacity: 1,
-                y: 0
-              }}
-              transition={{
-                duration: 0.5,
-                delay: 0.6 + index * 0.1
-              }}
-              className="flex flex-col items-center rounded-2xl bg-white/5 p-6 backdrop-blur-sm ring-1 ring-white/10">
+              <motion.div
+                key={stat.label}
+                initial={{
+                  opacity: 0,
+                  y: 20
+                }}
+                animate={{
+                  opacity: 1,
+                  y: 0
+                }}
+                transition={{
+                  duration: 0.5,
+                  delay: 0.6 + index * 0.1
+                }}
+                className="flex flex-col items-center rounded-2xl bg-white/5 p-6 backdrop-blur-sm ring-1 ring-white/10">
 
                 <stat.icon className="h-6 w-6 text-primary-400 mb-3" />
                 <dd className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
@@ -285,27 +275,27 @@ export function LandingPage() {
 
           <div className="mt-16 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
             {features.map((feature, idx) =>
-            <motion.div
-              key={idx}
-              initial={{
-                opacity: 0,
-                y: 20
-              }}
-              whileInView={{
-                opacity: 1,
-                y: 0
-              }}
-              viewport={{
-                once: true
-              }}
-              transition={{
-                duration: 0.5,
-                delay: idx * 0.1
-              }}
-              className="relative flex flex-col p-8 rounded-2xl bg-slate-50 border border-slate-100 hover:bg-white hover:shadow-xl hover:border-slate-200 transition-all group">
+              <motion.div
+                key={idx}
+                initial={{
+                  opacity: 0,
+                  y: 20
+                }}
+                whileInView={{
+                  opacity: 1,
+                  y: 0
+                }}
+                viewport={{
+                  once: true
+                }}
+                transition={{
+                  duration: 0.5,
+                  delay: idx * 0.1
+                }}
+                className="relative flex flex-col p-8 rounded-2xl bg-slate-50 border border-slate-100 hover:bg-white hover:shadow-xl hover:border-slate-200 transition-all group">
 
                 <div
-                className={`rounded-xl p-3 ${feature.color} w-fit mb-6 group-hover:scale-110 transition-transform`}>
+                  className={`rounded-xl p-3 ${feature.color} w-fit mb-6 group-hover:scale-110 transition-transform`}>
 
                   <feature.icon className="h-6 w-6" />
                 </div>
@@ -335,17 +325,17 @@ export function LandingPage() {
               </h2>
               <div className="space-y-4">
                 {[
-                'Create detailed profiles with AI-powered CV parsing',
-                'Get matched with jobs based on your skills and preferences',
-                'Track applications: Applied, Shortlisted, Interviewed, Hired',
-                'Access career guidance and upskilling recommendations',
-                'Receive notifications via email, SMS, and Telegram'].
-                map((item, idx) =>
-                <div key={idx} className="flex items-start gap-3">
-                    <CheckCircle2 className="h-5 w-5 text-success-500 mt-0.5 flex-shrink-0" />
-                    <span className="text-slate-600">{item}</span>
-                  </div>
-                )}
+                  'Create detailed profiles with AI-powered CV parsing',
+                  'Get matched with jobs based on your skills and preferences',
+                  'Track applications: Applied, Shortlisted, Interviewed, Hired',
+                  'Access career guidance and upskilling recommendations',
+                  'Receive notifications via email, SMS, and Telegram'].
+                  map((item, idx) =>
+                    <div key={idx} className="flex items-start gap-3">
+                      <CheckCircle2 className="h-5 w-5 text-success-500 mt-0.5 flex-shrink-0" />
+                      <span className="text-slate-600">{item}</span>
+                    </div>
+                  )}
               </div>
               <div className="mt-8">
                 <Link to="/seeker/dashboard">
@@ -410,8 +400,15 @@ export function LandingPage() {
           </div>
 
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {featuredJobs.map((job, idx) =>
-            <JobCard key={job.id} job={job} index={idx} />
+            {loading ? (
+              // Simple loading skeleton
+              Array(3).fill(0).map((_, i) => (
+                <div key={i} className="h-64 rounded-2xl bg-slate-100 animate-pulse" />
+              ))
+            ) : (
+              featuredJobs.map((job, idx) =>
+                <JobCard key={job.id} job={job} index={idx} />
+              )
             )}
           </div>
         </div>

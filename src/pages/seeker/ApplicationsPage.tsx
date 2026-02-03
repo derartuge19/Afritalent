@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
 import { Button } from '../../components/common/Button';
 import { Badge } from '../../components/common/Badge';
@@ -15,10 +15,13 @@ import {
   MessageSquare,
   ExternalLink,
   MoreVertical,
-  Eye } from
-'lucide-react';
+  Eye
+} from
+  'lucide-react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import { getMyApplications } from '../../lib/api';
+
 interface Application {
   id: string;
   jobTitle: string;
@@ -32,87 +35,32 @@ interface Application {
   nextStep?: string;
   interviewDate?: string;
 }
-const applications: Application[] = [
-{
-  id: '1',
-  jobTitle: 'Senior Frontend Engineer',
-  company: 'TechAfrica',
-  location: 'Addis Ababa, Ethiopia',
-  salary: '$40k - $60k',
-  appliedDate: '2024-01-15',
-  status: 'interview',
-  lastUpdate: '2 hours ago',
-  logoColor: 'bg-blue-600',
-  nextStep: 'Technical Interview',
-  interviewDate: '2024-01-25'
-},
-{
-  id: '2',
-  jobTitle: 'Product Manager',
-  company: 'Safaricom',
-  location: 'Nairobi, Kenya',
-  salary: '$50k - $80k',
-  appliedDate: '2024-01-18',
-  status: 'screening',
-  lastUpdate: '1 day ago',
-  logoColor: 'bg-green-600',
-  nextStep: 'Skills Assessment'
-},
-{
-  id: '3',
-  jobTitle: 'Data Scientist',
-  company: 'Flutterwave',
-  location: 'Lagos, Nigeria',
-  salary: '$60k - $90k',
-  appliedDate: '2024-01-10',
-  status: 'offer',
-  lastUpdate: '3 hours ago',
-  logoColor: 'bg-amber-600',
-  nextStep: 'Review Offer'
-},
-{
-  id: '4',
-  jobTitle: 'UX Designer',
-  company: 'Andela',
-  location: 'Remote',
-  salary: '$45k - $70k',
-  appliedDate: '2024-01-05',
-  status: 'rejected',
-  lastUpdate: '5 days ago',
-  logoColor: 'bg-purple-600'
-},
-{
-  id: '5',
-  jobTitle: 'Backend Developer',
-  company: 'Paystack',
-  location: 'Accra, Ghana',
-  salary: '$55k - $85k',
-  appliedDate: '2024-01-20',
-  status: 'applied',
-  lastUpdate: '2 days ago',
-  logoColor: 'bg-teal-600'
-}];
 
-const statusConfig = {
+const statusConfig: Record<string, {
+  label: string;
+  variant: 'default' | 'secondary' | 'success' | 'warning' | 'danger';
+  color: string;
+  icon: any;
+}> = {
   applied: {
     label: 'Applied',
     variant: 'secondary' as const,
     color: 'bg-slate-500',
     icon: Clock
   },
-  screening: {
-    label: 'Screening',
+  shortlisted: {
+    label: 'Shortlisted',
     variant: 'warning' as const,
     color: 'bg-amber-500',
     icon: Eye
   },
-  interview: {
-    label: 'Interview',
+  interviewed: {
+    label: 'Interviewed',
     variant: 'default' as const,
     color: 'bg-primary-500',
     icon: Calendar
   },
-  offer: {
+  offered: {
     label: 'Offer Received',
     variant: 'success' as const,
     color: 'bg-success-500',
@@ -132,35 +80,98 @@ const statusConfig = {
   }
 };
 const stages = [
-'All',
-'Applied',
-'Screening',
-'Interview',
-'Offer',
-'Hired',
-'Rejected'];
+  'All',
+  'Applied',
+  'Shortlisted',
+  'Interviewed',
+  'Offered',
+  'Hired',
+  'Rejected'];
+
+const logoColors = [
+  'bg-blue-600',
+  'bg-green-600',
+  'bg-amber-600',
+  'bg-purple-600',
+  'bg-teal-600',
+  'bg-red-600',
+  'bg-indigo-600',
+  'bg-pink-600'
+];
+
+const getTimeSince = (date: string) => {
+  const now = new Date();
+  const past = new Date(date);
+  const diffMs = now.getTime() - past.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  if (diffMins < 60) return `${diffMins} minutes ago`;
+  if (diffHours < 24) return `${diffHours} hours ago`;
+  return `${diffDays} days ago`;
+};
 
 export function ApplicationsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStage, setSelectedStage] = useState('All');
+  const [applications, setApplications] = useState<Application[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchApplications = async () => {
+      try {
+        const data = await getMyApplications();
+        const mappedApplications: Application[] = data.map((app, index) => ({
+          id: app.id.toString(),
+          jobTitle: app.job?.title || 'Unknown Position',
+          company: app.job?.employer?.company_name || 'Unknown Company',
+          location: app.job?.location || 'Location not specified',
+          salary: app.job?.salary_range || 'Not specified',
+          appliedDate: app.applied_at,
+          status: app.status as any,
+          lastUpdate: getTimeSince(app.applied_at),
+          logoColor: logoColors[index % logoColors.length],
+        }));
+        setApplications(mappedApplications);
+      } catch (error) {
+        console.error('Failed to fetch applications:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchApplications();
+  }, []);
+
   const filteredApplications = applications.filter((app) => {
     const matchesSearch =
-    app.jobTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    app.company.toLowerCase().includes(searchQuery.toLowerCase());
+      app.jobTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      app.company.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStage =
-    selectedStage === 'All' || app.status === selectedStage.toLowerCase();
+      selectedStage === 'All' || app.status === selectedStage.toLowerCase();
     return matchesSearch && matchesStage;
   });
   const stageCounts = stages.reduce(
     (acc, stage) => {
       acc[stage] =
-      stage === 'All' ?
-      applications.length :
-      applications.filter((a) => a.status === stage.toLowerCase()).length;
+        stage === 'All' ?
+          applications.length :
+          applications.filter((a) => a.status === stage.toLowerCase()).length;
       return acc;
     },
     {} as Record<string, number>
   );
+  if (loading) {
+    return (
+      <DashboardLayout role="seeker">
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   return (
     <DashboardLayout role="seeker">
       <div className="space-y-6">
@@ -175,14 +186,14 @@ export function ApplicationsPage() {
         {/* Pipeline Stages */}
         <div className="flex gap-2 overflow-x-auto pb-2">
           {stages.map((stage) =>
-          <button
-            key={stage}
-            onClick={() => setSelectedStage(stage)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${selectedStage === stage ? 'bg-primary-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
+            <button
+              key={stage}
+              onClick={() => setSelectedStage(stage)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${selectedStage === stage ? 'bg-primary-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
 
               {stage}
               <span
-              className={`ml-2 px-2 py-0.5 rounded-full text-xs ${selectedStage === stage ? 'bg-white/20' : 'bg-slate-200'}`}>
+                className={`ml-2 px-2 py-0.5 rounded-full text-xs ${selectedStage === stage ? 'bg-white/20' : 'bg-slate-200'}`}>
 
                 {stageCounts[stage]}
               </span>
@@ -208,7 +219,8 @@ export function ApplicationsPage() {
         {/* Applications List */}
         <div className="space-y-4">
           {filteredApplications.map((application, index) => {
-            const StatusIcon = statusConfig[application.status].icon;
+            const statusInfo = statusConfig[application.status] || statusConfig.applied;
+            const StatusIcon = statusInfo.icon;
             return (
               <motion.div
                 key={application.id}
@@ -265,11 +277,11 @@ export function ApplicationsPage() {
                   <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                     <div className="flex flex-col items-start sm:items-end">
                       <Badge
-                        variant={statusConfig[application.status].variant}
+                        variant={statusInfo.variant}
                         className="mb-1">
 
                         <StatusIcon className="h-3 w-3 mr-1" />
-                        {statusConfig[application.status].label}
+                        {statusInfo.label}
                       </Badge>
                       <span className="text-xs text-slate-400">
                         Updated {application.lastUpdate}
@@ -277,7 +289,7 @@ export function ApplicationsPage() {
                     </div>
 
                     {application.nextStep &&
-                    <div className="px-3 py-2 bg-primary-50 rounded-lg border border-primary-100">
+                      <div className="px-3 py-2 bg-primary-50 rounded-lg border border-primary-100">
                         <p className="text-xs text-primary-600 font-medium">
                           Next Step
                         </p>
@@ -285,15 +297,15 @@ export function ApplicationsPage() {
                           {application.nextStep}
                         </p>
                         {application.interviewDate &&
-                      <p className="text-xs text-primary-600 mt-1">
+                          <p className="text-xs text-primary-600 mt-1">
                             {new Date(
-                          application.interviewDate
-                        ).toLocaleDateString('en-US', {
-                          month: 'short',
-                          day: 'numeric'
-                        })}
+                              application.interviewDate
+                            ).toLocaleDateString('en-US', {
+                              month: 'short',
+                              day: 'numeric'
+                            })}
                           </p>
-                      }
+                        }
                       </div>
                     }
 
@@ -315,7 +327,7 @@ export function ApplicationsPage() {
         </div>
 
         {filteredApplications.length === 0 &&
-        <div className="text-center py-12 bg-white rounded-xl border border-slate-200">
+          <div className="text-center py-12 bg-white rounded-xl border border-slate-200">
             <Clock className="h-12 w-12 text-slate-300 mx-auto mb-4" />
             <p className="text-slate-500">No applications found</p>
             <Link to="/jobs">

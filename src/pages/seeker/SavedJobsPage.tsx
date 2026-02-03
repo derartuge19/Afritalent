@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
 import { Button } from '../../components/common/Button';
 import { Badge } from '../../components/common/Badge';
@@ -7,86 +7,63 @@ import { JobCard, Job } from '../../components/jobs/JobCard';
 import { Search, Bookmark, BookmarkX, Filter, Grid, List } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-const savedJobs: Job[] = [
-{
-  id: '1',
-  title: 'Senior Frontend Engineer',
-  company: 'TechAfrica',
-  location: 'Addis Ababa, Ethiopia',
-  salary: '$40k - $60k',
-  type: 'Full-time',
-  posted: '2 days ago',
-  tags: ['React', 'TypeScript', 'Remote'],
-  logoColor: 'bg-blue-600'
-},
-{
-  id: '2',
-  title: 'Product Manager',
-  company: 'Safaricom',
-  location: 'Nairobi, Kenya',
-  salary: '$50k - $80k',
-  type: 'Full-time',
-  posted: '1 day ago',
-  tags: ['Product', 'Agile', 'Fintech'],
-  logoColor: 'bg-green-600'
-},
-{
-  id: '3',
-  title: 'Data Scientist',
-  company: 'Flutterwave',
-  location: 'Lagos, Nigeria',
-  salary: '$60k - $90k',
-  type: 'Remote',
-  posted: '3 days ago',
-  tags: ['Python', 'ML', 'Big Data'],
-  logoColor: 'bg-amber-600'
-},
-{
-  id: '4',
-  title: 'UX Designer',
-  company: 'Andela',
-  location: 'Remote',
-  salary: '$45k - $70k',
-  type: 'Contract',
-  posted: '5 hours ago',
-  tags: ['Figma', 'User Research', 'Prototyping'],
-  logoColor: 'bg-purple-600'
-},
-{
-  id: '5',
-  title: 'DevOps Engineer',
-  company: 'Paystack',
-  location: 'Accra, Ghana',
-  salary: '$55k - $85k',
-  type: 'Full-time',
-  posted: '1 week ago',
-  tags: ['AWS', 'Kubernetes', 'CI/CD'],
-  logoColor: 'bg-teal-600'
-},
-{
-  id: '6',
-  title: 'Mobile Developer',
-  company: 'M-Pesa',
-  location: 'Nairobi, Kenya',
-  salary: '$45k - $65k',
-  type: 'Full-time',
-  posted: '4 days ago',
-  tags: ['React Native', 'iOS', 'Android'],
-  logoColor: 'bg-red-600'
-}];
+import { getSavedJobs, unsaveJob } from '../../lib/api';
 
 export function SavedJobsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [jobs, setJobs] = useState(savedJobs);
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchSavedJobs = async () => {
+      try {
+        const data = await getSavedJobs();
+        const mappedJobs: Job[] = data.map((savedJob) => ({
+          id: savedJob.job?.id.toString() || savedJob.job_id.toString(),
+          title: savedJob.job?.title || 'Unknown Position',
+          company: savedJob.job?.employer?.company_name || 'Unknown Company',
+          location: savedJob.job?.location || 'Location not specified',
+          salary: savedJob.job?.salary_range || 'Not specified',
+          type: savedJob.job?.job_type || 'Full-time',
+          posted: new Date(savedJob.created_at).toLocaleDateString(),
+          tags: [],
+          logoColor: 'bg-blue-600'
+        }));
+        setJobs(mappedJobs);
+      } catch (error) {
+        console.error('Failed to fetch saved jobs:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSavedJobs();
+  }, []);
+
   const filteredJobs = jobs.filter(
     (job) =>
-    job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    job.company.toLowerCase().includes(searchQuery.toLowerCase())
+      job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      job.company.toLowerCase().includes(searchQuery.toLowerCase())
   );
-  const removeJob = (id: string) => {
-    setJobs((prev) => prev.filter((job) => job.id !== id));
+  const removeJob = async (id: string) => {
+    try {
+      await unsaveJob(parseInt(id));
+      setJobs((prev) => prev.filter((job) => job.id !== id));
+    } catch (error) {
+      console.error('Failed to unsave job:', error);
+    }
   };
+  if (loading) {
+    return (
+      <DashboardLayout role="seeker">
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   return (
     <DashboardLayout role="seeker">
       <div className="space-y-6">
@@ -134,50 +111,50 @@ export function SavedJobsPage() {
 
         {/* Jobs Grid/List */}
         {filteredJobs.length > 0 ?
-        <div
-          className={
-          viewMode === 'grid' ?
-          'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4' :
-          'space-y-4'
-          }>
+          <div
+            className={
+              viewMode === 'grid' ?
+                'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4' :
+                'space-y-4'
+            }>
 
             {filteredJobs.map((job, index) =>
-          <motion.div
-            key={job.id}
-            initial={{
-              opacity: 0,
-              y: 20
-            }}
-            animate={{
-              opacity: 1,
-              y: 0
-            }}
-            transition={{
-              delay: index * 0.05
-            }}
-            className="relative group">
+              <motion.div
+                key={job.id}
+                initial={{
+                  opacity: 0,
+                  y: 20
+                }}
+                animate={{
+                  opacity: 1,
+                  y: 0
+                }}
+                transition={{
+                  delay: index * 0.05
+                }}
+                className="relative group">
 
                 <JobCard job={job} index={index} />
                 <button
-              onClick={() => removeJob(job.id)}
-              className="absolute top-4 right-4 p-2 bg-white rounded-lg shadow-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50"
-              title="Remove from saved">
+                  onClick={() => removeJob(job.id)}
+                  className="absolute top-4 right-4 p-2 bg-white rounded-lg shadow-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50"
+                  title="Remove from saved">
 
                   <BookmarkX className="h-4 w-4 text-red-500" />
                 </button>
               </motion.div>
-          )}
+            )}
           </div> :
 
-        <div className="text-center py-12 bg-white rounded-xl border border-slate-200">
+          <div className="text-center py-12 bg-white rounded-xl border border-slate-200">
             <Bookmark className="h-12 w-12 text-slate-300 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-slate-900 mb-2">
               No saved jobs
             </h3>
             <p className="text-slate-500 mb-4">
               {searchQuery ?
-            'No jobs match your search' :
-            "Start saving jobs you're interested in"}
+                'No jobs match your search' :
+                "Start saving jobs you're interested in"}
             </p>
             <Link to="/jobs">
               <Button>Browse Jobs</Button>

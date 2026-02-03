@@ -11,24 +11,24 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   (
-  {
-    className,
-    variant = 'primary',
-    size = 'md',
-    isLoading,
-    leftIcon,
-    rightIcon,
-    children,
-    ...props
-  },
-  ref) =>
-  {
+    {
+      className,
+      variant = 'primary',
+      size = 'md',
+      isLoading,
+      leftIcon,
+      rightIcon,
+      children,
+      type = 'button',
+      ...props
+    },
+    ref) => {
     const variants = {
       primary: 'bg-primary-600 text-white hover:bg-primary-700 shadow-sm',
       secondary: 'bg-slate-800 text-white hover:bg-slate-900 shadow-sm',
       accent: 'bg-accent-500 text-white hover:bg-accent-600 shadow-sm',
       outline:
-      'border-2 border-slate-200 bg-transparent hover:bg-slate-50 text-slate-700',
+        'border-2 border-slate-200 bg-transparent hover:bg-slate-50 text-slate-700',
       ghost: 'bg-transparent hover:bg-slate-100 text-slate-700',
       danger: 'bg-red-600 text-white hover:bg-red-700 shadow-sm'
     };
@@ -40,6 +40,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     return (
       <motion.button
         ref={ref}
+        type={type}
         whileTap={{
           scale: 0.98
         }}
@@ -49,8 +50,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           sizes[size],
           className
         )}
-        disabled={isLoading || props.disabled}
-        {...props}>
+        disabled={isLoading || (props.disabled as boolean)}
+        {...(props as any)}>
 
         {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
         {!isLoading && leftIcon && <span className="mr-2">{leftIcon}</span>}
