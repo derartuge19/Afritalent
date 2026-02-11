@@ -1,12 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
 import { Button } from '../../components/common/Button';
-import { Badge } from '../../components/common/Badge';
 import { Input } from '../../components/common/Input';
 import { JobCard, Job } from '../../components/jobs/JobCard';
-import { Search, Bookmark, BookmarkX, Filter, Grid, List } from 'lucide-react';
+import { Search, Bookmark, BookmarkX, Filter, Grid, List, ArrowLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { getSavedJobs, unsaveJob } from '../../lib/api';
 
 export function SavedJobsPage() {
@@ -14,6 +13,7 @@ export function SavedJobsPage() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchSavedJobs = async () => {
@@ -56,7 +56,7 @@ export function SavedJobsPage() {
   };
   if (loading) {
     return (
-      <DashboardLayout role="seeker">
+      <DashboardLayout role="user">
         <div className="flex items-center justify-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
         </div>
@@ -65,8 +65,17 @@ export function SavedJobsPage() {
   }
 
   return (
-    <DashboardLayout role="seeker">
+    <DashboardLayout role="user">
       <div className="space-y-6">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate('/user/dashboard')}
+          leftIcon={<ArrowLeft className="h-4 w-4" />}
+          className="text-slate-500 hover:text-slate-900"
+        >
+          Back to Dashboard
+        </Button>
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>

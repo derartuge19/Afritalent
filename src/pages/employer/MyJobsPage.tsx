@@ -12,126 +12,94 @@ import {
   Edit,
   Pause,
   Trash2,
-  MapPin,
-  Clock,
   Filter,
-  ChevronDown } from
-'lucide-react';
+  ChevronDown
+} from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-interface Job {
-  id: string;
-  title: string;
-  department: string;
-  location: string;
-  type: string;
-  status: 'active' | 'paused' | 'closed' | 'draft';
-  applicants: number;
-  views: number;
-  posted: string;
-  deadline: string;
-}
-const jobs: Job[] = [
-{
-  id: '1',
-  title: 'Senior Frontend Engineer',
-  department: 'Engineering',
-  location: 'Addis Ababa, Ethiopia',
-  type: 'Full-time',
-  status: 'active',
-  applicants: 45,
-  views: 892,
-  posted: '2024-01-15',
-  deadline: '2024-02-15'
-},
-{
-  id: '2',
-  title: 'Product Manager',
-  department: 'Product',
-  location: 'Remote',
-  type: 'Full-time',
-  status: 'active',
-  applicants: 32,
-  views: 654,
-  posted: '2024-01-18',
-  deadline: '2024-02-20'
-},
-{
-  id: '3',
-  title: 'Data Scientist',
-  department: 'Data',
-  location: 'Nairobi, Kenya',
-  type: 'Full-time',
-  status: 'paused',
-  applicants: 28,
-  views: 445,
-  posted: '2024-01-10',
-  deadline: '2024-02-10'
-},
-{
-  id: '4',
-  title: 'UX Designer',
-  department: 'Design',
-  location: 'Lagos, Nigeria',
-  type: 'Contract',
-  status: 'closed',
-  applicants: 67,
-  views: 1203,
-  posted: '2023-12-20',
-  deadline: '2024-01-20'
-},
-{
-  id: '5',
-  title: 'DevOps Engineer',
-  department: 'Engineering',
-  location: 'Addis Ababa, Ethiopia',
-  type: 'Full-time',
-  status: 'draft',
-  applicants: 0,
-  views: 0,
-  posted: '',
-  deadline: ''
-}];
+import { getMyJobs, updateJobStatus, Job as APIJob } from '../../lib/api';
 
-const statusConfig = {
-  active: {
-    label: 'Active',
-    variant: 'success' as const,
-    color: 'bg-success-500'
-  },
-  paused: {
-    label: 'Paused',
-    variant: 'warning' as const,
-    color: 'bg-amber-500'
-  },
-  closed: {
-    label: 'Closed',
-    variant: 'secondary' as const,
-    color: 'bg-slate-500'
-  },
-  draft: {
-    label: 'Draft',
-    variant: 'outline' as const,
-    color: 'bg-slate-300'
-  }
-};
 export function MyJobsPage() {
+  const [jobs, setJobs] = useState<APIJob[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [openMenu, setOpenMenu] = useState<string | null>(null);
+  const [openMenu, setOpenMenu] = useState<number | null>(null);
+
+  const fetchJobs = async () => {
+    try {
+      const data = await getMyJobs();
+      setJobs(data);
+    } catch (err) {
+      console.error('Failed to fetch jobs:', err);
+      setError('Failed to load your jobs.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  React.useEffect(() => {
+    // Check URL params for search query on mount
+    const params = new URLSearchParams(window.location.search);
+    const urlSearch = params.get('search');
+    if (urlSearch) {
+      setSearchQuery(urlSearch);
+    }
+    fetchJobs();
+  }, []);
+
+  const handleToggleStatus = async (jobId: number, currentStatus: string) => {
+    try {
+      const newStatus = currentStatus === 'open' ? 'paused' : 'open';
+      await updateJobStatus(jobId, newStatus);
+      fetchJobs(); // Refresh
+      setOpenMenu(null);
+    } catch (err) {
+      console.error('Failed to update job status:', err);
+    }
+  };
+
   const filteredJobs = jobs.filter((job) => {
-    const matchesSearch =
-    job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    job.department.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = job.title.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'all' || job.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
+
   const stats = {
-    active: jobs.filter((j) => j.status === 'active').length,
+    open: jobs.filter((j) => j.status === 'open').length,
     paused: jobs.filter((j) => j.status === 'paused').length,
     closed: jobs.filter((j) => j.status === 'closed').length,
-    draft: jobs.filter((j) => j.status === 'draft').length
   };
+
+  const statusConfig: any = {
+    open: {
+      label: 'Open',
+      variant: 'success',
+      color: 'bg-success-500'
+    },
+    paused: {
+      label: 'Paused',
+      variant: 'warning',
+      color: 'bg-amber-500'
+    },
+    closed: {
+      label: 'Closed',
+      variant: 'secondary',
+      color: 'bg-slate-500'
+    }
+  };
+
+  if (loading) {
+    return (
+      <DashboardLayout role="employer">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   return (
     <DashboardLayout role="employer">
       <div className="space-y-6">
@@ -153,153 +121,144 @@ export function MyJobsPage() {
         {/* Stats Cards */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {Object.entries(stats).map(([status, count]) =>
-          <button
-            key={status}
-            onClick={() =>
-            setStatusFilter(status === statusFilter ? 'all' : status)
-            }
-            className={`p-4 rounded-xl border transition-all ${statusFilter === status ? 'border-primary-300 bg-primary-50' : 'border-slate-200 bg-white hover:border-slate-300'}`}>
-
-              <div className="flex items-center gap-3">
-                <div
-                className={`w-3 h-3 rounded-full ${statusConfig[status as keyof typeof statusConfig].color}`} />
-
-                <span className="text-sm font-medium text-slate-600 capitalize">
-                  {status}
-                </span>
-              </div>
-              <p className="text-2xl font-bold text-slate-900 mt-2">{count}</p>
+            <button
+              key={status}
+              onClick={() => setStatusFilter(status)}
+              className={`p-4 rounded-xl border transition-all text-left ${statusFilter === status
+                ? 'border-blue-600 bg-blue-50 ring-1 ring-blue-600'
+                : 'border-slate-200 bg-white hover:border-slate-300'
+                }`}
+            >
+              <p className="text-sm font-medium text-slate-500 capitalize">
+                {status} Jobs
+              </p>
+              <p className="text-2xl font-bold text-slate-900">{count}</p>
             </button>
           )}
+          <button
+            onClick={() => setStatusFilter('all')}
+            className={`p-4 rounded-xl border transition-all text-left ${statusFilter === 'all'
+              ? 'border-blue-600 bg-blue-50 ring-1 ring-blue-600'
+              : 'border-slate-200 bg-white hover:border-slate-300'
+              }`}
+          >
+            <p className="text-sm font-medium text-slate-500">Total Jobs</p>
+            <p className="text-2xl font-bold text-slate-900">{jobs.length}</p>
+          </button>
         </div>
 
-        {/* Filters */}
+        {/* Filters and Search */}
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="flex-1">
             <Input
-              placeholder="Search jobs..."
+              placeholder="Search by job title or department..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              icon={<Search className="h-4 w-4" />} />
-
+              icon={<Search className="h-4 w-4" />}
+            />
           </div>
-          <Button variant="outline" leftIcon={<Filter className="h-4 w-4" />}>
-            Filters
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" className="gap-2">
+              <Filter className="h-4 w-4" /> Filters
+            </Button>
+            <Button variant="outline" className="gap-2">
+              <ChevronDown className="h-4 w-4" /> Sort By
+            </Button>
+          </div>
         </div>
 
         {/* Jobs List */}
         <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full text-left">
               <thead>
-                <tr className="border-b border-slate-200 bg-slate-50">
-                  <th className="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                    Job
+                <tr className="bg-slate-50 border-b border-slate-200">
+                  <th className="py-4 px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                    Job Details
                   </th>
-                  <th className="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider hidden md:table-cell">
-                    Location
-                  </th>
-                  <th className="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                  <th className="py-4 px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-center">
                     Status
                   </th>
-                  <th className="text-center py-3 px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider hidden sm:table-cell">
+                  <th className="py-4 px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-center hidden sm:table-cell">
                     Applicants
                   </th>
-                  <th className="text-center py-3 px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider hidden lg:table-cell">
+                  <th className="py-4 px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-center hidden lg:table-cell">
                     Views
                   </th>
-                  <th className="text-right py-3 px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                  <th className="py-4 px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right">
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-200">
                 {filteredJobs.map((job, index) =>
-                <motion.tr
-                  key={job.id}
-                  initial={{
-                    opacity: 0,
-                    y: 10
-                  }}
-                  animate={{
-                    opacity: 1,
-                    y: 0
-                  }}
-                  transition={{
-                    delay: index * 0.05
-                  }}
-                  className="hover:bg-slate-50 transition-colors">
-
+                  <motion.tr
+                    key={job.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    className="hover:bg-slate-50 transition-colors"
+                  >
                     <td className="py-4 px-4">
-                      <div>
-                        <p className="font-medium text-slate-900">
+                      <div className="space-y-1">
+                        <p className="font-semibold text-slate-900">
                           {job.title}
                         </p>
                         <p className="text-sm text-slate-500">
-                          {job.department} • {job.type}
+                          {job.job_type}
                         </p>
                       </div>
                     </td>
-                    <td className="py-4 px-4 hidden md:table-cell">
-                      <div className="flex items-center text-sm text-slate-600">
-                        <MapPin className="h-4 w-4 mr-1 text-slate-400" />
-                        {job.location}
-                      </div>
-                    </td>
-                    <td className="py-4 px-4">
-                      <Badge variant={statusConfig[job.status].variant}>
-                        {statusConfig[job.status].label}
+                    <td className="py-4 px-4 text-center">
+                      <Badge variant={statusConfig[job.status]?.variant}>
+                        <div className="flex items-center gap-1.5">
+                          <div className={`h-1.5 w-1.5 rounded-full ${statusConfig[job.status]?.color}`} />
+                          {statusConfig[job.status]?.label}
+                        </div>
                       </Badge>
                     </td>
                     <td className="py-4 px-4 text-center hidden sm:table-cell">
                       <div className="flex items-center justify-center gap-1">
                         <Users className="h-4 w-4 text-slate-400" />
                         <span className="font-medium text-slate-900">
-                          {job.applicants}
+                          {job.applicants_count || 0}
                         </span>
                       </div>
                     </td>
                     <td className="py-4 px-4 text-center hidden lg:table-cell">
                       <div className="flex items-center justify-center gap-1">
                         <Eye className="h-4 w-4 text-slate-400" />
-                        <span className="text-slate-600">{job.views}</span>
+                        <span className="text-slate-600">{job.views || 0}</span>
                       </div>
                     </td>
-                    <td className="py-4 px-4">
-                      <div className="flex items-center justify-end gap-2">
-                        <Link to={`/employer/candidates?job=${job.id}`}>
-                          <Button variant="ghost" size="sm">
-                            View Applicants
-                          </Button>
-                        </Link>
-                        <div className="relative">
-                          <Button
+                    <td className="py-4 px-4 text-right">
+                      <div className="relative">
+                        <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() =>
-                          setOpenMenu(openMenu === job.id ? null : job.id)
-                          }
-                          className="p-2">
-
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                          {openMenu === job.id &&
-                        <div className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-slate-200 py-1 z-10">
-                              <button className="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2">
-                                <Edit className="h-4 w-4" /> Edit Job
-                              </button>
-                              <button className="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2">
-                                <Pause className="h-4 w-4" />{' '}
-                                {job.status === 'paused' ? 'Resume' : 'Pause'}{' '}
-                                Job
-                              </button>
-                              <button className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2">
-                                <Trash2 className="h-4 w-4" /> Delete Job
-                              </button>
-                            </div>
+                          onClick={() => setOpenMenu(openMenu === job.id ? null : job.id)}
+                          className="p-2"
+                        >
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                        {openMenu === job.id &&
+                          <div className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-slate-200 py-1 z-10">
+                            <button className="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2">
+                              <Edit className="h-4 w-4" /> Edit Job
+                            </button>
+                            <button
+                              onClick={() => handleToggleStatus(job.id, job.status)}
+                              className="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                            >
+                              <Pause className="h-4 w-4" />{' '}
+                              {job.status === 'paused' ? 'Resume' : 'Pause'}{' '}
+                              Job
+                            </button>
+                            <button className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2">
+                              <Trash2 className="h-4 w-4" /> Delete Job
+                            </button>
+                          </div>
                         }
-                        </div>
                       </div>
                     </td>
                   </motion.tr>
@@ -307,16 +266,19 @@ export function MyJobsPage() {
               </tbody>
             </table>
           </div>
-
           {filteredJobs.length === 0 &&
-          <div className="text-center py-12">
-              <p className="text-slate-500">
-                No jobs found matching your criteria
+            <div className="py-12 text-center">
+              <div className="inline-flex items-center justify-center h-12 w-12 rounded-full bg-slate-100 text-slate-400 mb-4">
+                <Search className="h-6 w-6" />
+              </div>
+              <h3 className="text-sm font-medium text-slate-900">No jobs found</h3>
+              <p className="text-sm text-slate-500">
+                Try adjusting your search or filters to find what you're looking for.
               </p>
             </div>
           }
         </div>
       </div>
-    </DashboardLayout>);
-
+    </DashboardLayout>
+  );
 }

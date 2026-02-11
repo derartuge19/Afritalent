@@ -13,10 +13,26 @@ export const formatCurrency = (amount: number, currency = 'USD') => {
   }).format(amount);
 };
 
-export const formatDate = (date: string) => {
+export const formatDate = (date: string | Date) => {
   return new Date(date).toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
     year: 'numeric'
+  });
+};
+
+export const formatShortMonth = (date: string | Date) => {
+  return new Date(date).toLocaleDateString('en-US', { month: 'short' });
+};
+
+export const formatDay = (date: string | Date) => {
+  return new Date(date).toLocaleDateString('en-US', { day: '2-digit' });
+};
+
+export const formatTime = (date: string | Date) => {
+  return new Date(date).toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true
   });
 };

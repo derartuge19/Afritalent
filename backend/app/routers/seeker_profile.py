@@ -7,6 +7,8 @@ from .auth import get_current_user
 
 router = APIRouter(prefix="/seeker-profile", tags=["seeker-profile"])
 
+from fastapi.responses import HTMLResponse
+
 class ProfileUpdate(BaseModel):
     first_name: str | None = None
     last_name: str | None = None
@@ -18,6 +20,12 @@ class ProfileUpdate(BaseModel):
     skills: str | None = None
     education: str | None = None
     experience: str | None = None
+    cv_html: str | None = None # Added field for CV HTML
+    job_type: str | None = None
+    work_mode: str | None = None
+    experience_level: str | None = None
+    min_salary: str | None = None
+    preferred_locations: str | None = None
 
 @router.get("/me")
 def get_my_profile(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
@@ -77,12 +85,19 @@ def get_my_profile(db: Session = Depends(get_db), current_user: models.User = De
         "location": profile.location,
         "phone": profile.phone,
         "cv_url": profile.cv_url,
+        "cv_html": profile.cv_html,
         "skills": profile.skills,
         "education": profile.education,
         "experience": profile.experience,
+        "job_type": profile.job_type,
+        "work_mode": profile.work_mode,
+        "experience_level": profile.experience_level,
+        "min_salary": profile.min_salary,
+        "preferred_locations": profile.preferred_locations,
         "completion_percentage": completion_percentage,
         "completion_status": completion_status,
-        "has_cv": bool(profile.cv_url)
+        "has_cv": bool(profile.cv_html),
+        "settings": crud.get_user_settings(db, current_user.id)
     }
 
 @router.put("/me")
@@ -128,11 +143,47 @@ def update_my_profile(
         profile.education = profile_update.education
     if profile_update.experience is not None:
         profile.experience = profile_update.experience
+    if profile_update.cv_html is not None:
+        profile.cv_html = profile_update.cv_html
+    
+    # New preference fields
+    if profile_update.job_type is not None:
+        profile.job_type = profile_update.job_type
+    if profile_update.work_mode is not None:
+        profile.work_mode = profile_update.work_mode
+    if profile_update.experience_level is not None:
+        profile.experience_level = profile_update.experience_level
+    if profile_update.min_salary is not None:
+        profile.min_salary = profile_update.min_salary
+    if profile_update.preferred_locations is not None:
+        profile.preferred_locations = profile_update.preferred_locations
     
     db.commit()
     db.refresh(profile)
     
     return {"message": "Profile updated successfully", "profile": profile}
+
+@router.get("/{seeker_id}/cv", response_class=HTMLResponse)
+def view_cv(
+    seeker_id: int,
+    db: Session = Depends(get_db)
+):
+    # First, try to find the primary CV from the CVs table
+    primary_cv = crud.get_primary_cv(db, seeker_id)
+    if primary_cv:
+        if primary_cv.content_html:
+            return HTMLResponse(content=primary_cv.content_html)
+        elif primary_cv.file_url:
+            from fastapi.responses import RedirectResponse
+            # Assuming file_url is relative to domain root, or absolute
+            return RedirectResponse(url=primary_cv.file_url)
+
+    # Fallback to legacy/profile-level CV
+    profile = db.query(models.SeekerProfile).filter(models.SeekerProfile.id == seeker_id).first()
+    if not profile or not profile.cv_html:
+        return HTMLResponse(content="<h1>CV not found</h1>", status_code=404)
+    
+    return HTMLResponse(content=profile.cv_html)
 
 @router.post("/upload-photo")
 async def upload_profile_photo(

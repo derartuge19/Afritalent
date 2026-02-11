@@ -7,7 +7,7 @@ import { Briefcase, CheckCircle, TrendingUp, Star } from 'lucide-react';
 import { JobCard } from '../components/jobs/JobCard';
 import { getSeekerAnalytics, getJobs, getSeekerProfile } from '../lib/api';
 
-export function SeekerDashboard() {
+export function UserDashboard() {
   const navigate = useNavigate();
   const [stats, setStats] = useState<any>({
     applications: 0,
@@ -110,7 +110,7 @@ export function SeekerDashboard() {
     }];
 
   return (
-    <DashboardLayout role="seeker">
+    <DashboardLayout role="user">
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-slate-900">
           Welcome back, {profile?.first_name || 'there'}!
@@ -176,7 +176,7 @@ export function SeekerDashboard() {
               }
             </p>
             <button
-              onClick={() => navigate('/seeker/settings')}
+              onClick={() => navigate('/user/settings')}
               className="text-sm font-medium text-teal-600 hover:text-teal-700"
             >
               Update Profile &rarr;

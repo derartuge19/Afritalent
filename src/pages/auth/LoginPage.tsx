@@ -36,7 +36,7 @@ export function LoginPage() {
             const { access_token } = response.data;
             await login(access_token);
 
-            navigate('/seeker/dashboard');
+            navigate('/user/dashboard');
 
         } catch (err: any) {
             console.error('Login error:', err);

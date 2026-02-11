@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
 import { Button } from '../../components/common/Button';
 import { Badge } from '../../components/common/Badge';
@@ -13,13 +13,12 @@ import {
   XCircle,
   Calendar,
   MessageSquare,
-  ExternalLink,
-  MoreVertical,
-  Eye
+  Eye,
+  ArrowLeft
 } from
   'lucide-react';
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { getMyApplications } from '../../lib/api';
 
 interface Application {
@@ -29,7 +28,7 @@ interface Application {
   location: string;
   salary: string;
   appliedDate: string;
-  status: 'applied' | 'screening' | 'interview' | 'offer' | 'hired' | 'rejected';
+  status: 'applied' | 'shortlisted' | 'invited' | 'scheduled' | 'interviewed' | 'offered' | 'hired' | 'rejected';
   lastUpdate: string;
   logoColor: string;
   nextStep?: string;
@@ -54,11 +53,23 @@ const statusConfig: Record<string, {
     color: 'bg-amber-500',
     icon: Eye
   },
-  interviewed: {
-    label: 'Interviewed',
-    variant: 'default' as const,
-    color: 'bg-primary-500',
+  invited: {
+    label: 'Interview Invite',
+    variant: 'warning' as const,
+    color: 'bg-indigo-600',
     icon: Calendar
+  },
+  scheduled: {
+    label: 'Interview Scheduled',
+    variant: 'default' as const,
+    color: 'bg-blue-600',
+    icon: Calendar
+  },
+  interviewed: {
+    label: 'Interviewed', // Meaning completed
+    variant: 'default' as const,
+    color: 'bg-purple-600',
+    icon: MessageSquare
   },
   offered: {
     label: 'Offer Received',
@@ -83,6 +94,7 @@ const stages = [
   'All',
   'Applied',
   'Shortlisted',
+  'Scheduled',
   'Interviewed',
   'Offered',
   'Hired',
@@ -117,6 +129,7 @@ export function ApplicationsPage() {
   const [selectedStage, setSelectedStage] = useState('All');
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchApplications = async () => {
@@ -142,29 +155,48 @@ export function ApplicationsPage() {
     };
 
     fetchApplications();
+
+    // Check URL params for search query on mount
+    const params = new URLSearchParams(window.location.search);
+    const urlSearch = params.get('search');
+    if (urlSearch) {
+      setSearchQuery(urlSearch);
+    }
   }, []);
 
   const filteredApplications = applications.filter((app) => {
     const matchesSearch =
       app.jobTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
       app.company.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStage =
-      selectedStage === 'All' || app.status === selectedStage.toLowerCase();
+
+    let matchesStage = selectedStage === 'All' || app.status === selectedStage.toLowerCase();
+
+    // Group 'invited' under 'Scheduled' section for seeker dashboard as per user request
+    if (selectedStage === 'Scheduled') {
+      matchesStage = app.status === 'scheduled' || app.status === 'invited';
+    }
+
     return matchesSearch && matchesStage;
   });
   const stageCounts = stages.reduce(
     (acc, stage) => {
-      acc[stage] =
-        stage === 'All' ?
-          applications.length :
-          applications.filter((a) => a.status === stage.toLowerCase()).length;
+      if (stage === 'All') {
+        acc[stage] = applications.length;
+      } else if (stage === 'Scheduled') {
+        acc[stage] = applications.filter((a) => a.status === 'scheduled' || a.status === 'invited').length;
+      } else if (stage === 'Invited') {
+        // We keep Invited tab but Scheduled also includes it
+        acc[stage] = applications.filter((a) => a.status === 'invited').length;
+      } else {
+        acc[stage] = applications.filter((a) => a.status === stage.toLowerCase()).length;
+      }
       return acc;
     },
     {} as Record<string, number>
   );
   if (loading) {
     return (
-      <DashboardLayout role="seeker">
+      <DashboardLayout role="user">
         <div className="flex items-center justify-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
         </div>
@@ -173,8 +205,17 @@ export function ApplicationsPage() {
   }
 
   return (
-    <DashboardLayout role="seeker">
+    <DashboardLayout role="user">
       <div className="space-y-6">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate('/user/dashboard')}
+          leftIcon={<ArrowLeft className="h-4 w-4" />}
+          className="text-slate-500 hover:text-slate-900"
+        >
+          Back to Dashboard
+        </Button>
         {/* Header */}
         <div>
           <h1 className="text-2xl font-bold text-slate-900">My Applications</h1>
@@ -310,6 +351,13 @@ export function ApplicationsPage() {
                     }
 
                     <div className="flex items-center gap-2">
+                      {(application.status === 'invited' || application.status === 'scheduled') && (
+                        <Link to="/user/interviews">
+                          <Button variant="primary" size="sm" className="bg-indigo-600 hover:bg-indigo-700">
+                            {application.status === 'invited' ? 'Respond to Invite' : 'View Interview'}
+                          </Button>
+                        </Link>
+                      )}
                       <Button variant="ghost" size="sm" className="p-2">
                         <MessageSquare className="h-4 w-4" />
                       </Button>

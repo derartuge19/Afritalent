@@ -29,9 +29,9 @@ export function ProtectedRoute({ allowedRoles }: ProtectedRouteProps) {
     // Or just a 403 Forbidden page.
     // For now, redirect to their own dashboard or home.
     if (user.role === 'employer') return <Navigate to="/employer/dashboard" replace />;
-    if (user.role === 'seeker') return <Navigate to="/seeker/dashboard" replace />;
+    if (user.role === 'seeker') return <Navigate to="/user/dashboard" replace />;
     if (user.role === 'admin') return <Navigate to="/admin/dashboard" replace />;
-    
+
     return <Navigate to="/" replace />;
   }
 

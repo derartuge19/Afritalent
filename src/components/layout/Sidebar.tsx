@@ -1,4 +1,3 @@
-import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -14,48 +13,34 @@ import {
   Target,
   TrendingUp,
   Building2,
-  Globe,
   GraduationCap,
-  Bell
+  Calendar,
+  X
 } from
   'lucide-react';
 import { cn } from '../../lib/utils';
 import { Button } from '../common/Button';
-import { getSeekerProfile } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
 
 interface SidebarProps {
-  role: 'seeker' | 'employer' | 'admin';
+  role: 'seeker' | 'user' | 'employer' | 'admin';
+  onClose?: () => void;
+  className?: string;
 }
-export function Sidebar({ role }: SidebarProps) {
+export function Sidebar({ role, onClose, className }: SidebarProps) {
   const location = useLocation();
-  const { logout } = useAuth();
-  const [profile, setProfile] = useState<any>(null);
-
-  useEffect(() => {
-    if (role === 'seeker') {
-      const fetchProfile = async () => {
-        try {
-          const data = await getSeekerProfile();
-          setProfile(data);
-        } catch (error) {
-          console.error('Failed to fetch profile:', error);
-        }
-      };
-      fetchProfile();
-    }
-  }, [role]);
+  const { logout, profile } = useAuth();
 
   const menus = {
-    seeker: [
+    user: [
       {
         name: 'Dashboard',
-        href: '/seeker/dashboard',
+        href: '/user/dashboard',
         icon: LayoutDashboard
       },
       {
         name: 'My Applications',
-        href: '/seeker/applications',
+        href: '/user/applications',
         icon: FileText
       },
       {
@@ -65,27 +50,32 @@ export function Sidebar({ role }: SidebarProps) {
       },
       {
         name: 'Saved Jobs',
-        href: '/seeker/saved',
+        href: '/user/saved',
         icon: Briefcase
       },
       {
         name: 'CV Builder',
-        href: '/seeker/cv-builder',
+        href: '/user/cv-builder',
         icon: BookOpen
       },
       {
         name: 'Skills Analytics',
-        href: '/seeker/skills',
+        href: '/user/skills',
         icon: TrendingUp
       },
       {
         name: 'Career Guidance',
-        href: '/seeker/career',
+        href: '/user/career',
         icon: GraduationCap
       },
       {
+        name: 'Interviews',
+        href: '/user/interviews',
+        icon: Calendar
+      },
+      {
         name: 'Settings',
-        href: '/seeker/settings',
+        href: '/user/settings',
         icon: Settings
       }],
 
@@ -124,6 +114,11 @@ export function Sidebar({ role }: SidebarProps) {
         name: 'Company Profile',
         href: '/employer/company',
         icon: Building2
+      },
+      {
+        name: 'Interviews',
+        href: '/employer/interviews',
+        icon: Calendar
       },
       {
         name: 'Settings',
@@ -169,31 +164,37 @@ export function Sidebar({ role }: SidebarProps) {
       }]
 
   };
-  const currentMenu = menus[role];
+  const currentMenu = menus[role === 'seeker' ? 'user' : role];
   const roleLabels = {
-    seeker: 'Job Seeker',
+    seeker: 'User',
+    user: 'User',
     employer: 'Employer',
     admin: 'Administrator'
   };
   const roleColors = {
     seeker: 'bg-primary-100 text-primary-700',
+    user: 'bg-primary-100 text-primary-700',
     employer: 'bg-accent-100 text-accent-700',
     admin: 'bg-slate-100 text-slate-700'
   };
 
   const getUserName = () => {
-    if (role === 'seeker' && profile) {
+    if ((role === 'seeker' || role === 'user') && profile) {
       return `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'User';
+    } else if (role === 'employer' && profile) {
+      return profile.company_name || 'Your Company';
     } else if (role === 'employer') {
-      return 'TechAfrica Inc.';
+      return 'Employer';
     } else {
       return 'Admin User';
     }
   };
 
   const getUserInitials = () => {
-    if (role === 'seeker' && profile?.first_name && profile?.last_name) {
+    if ((role === 'seeker' || role === 'user') && profile?.first_name && profile?.last_name) {
       return `${profile.first_name.charAt(0)}${profile.last_name.charAt(0)}`.toUpperCase();
+    } else if (role === 'employer' && profile?.company_name) {
+      return profile.company_name.slice(0, 2).toUpperCase();
     } else if (role === 'admin') {
       return 'AD';
     } else if (role === 'employer') {
@@ -209,14 +210,19 @@ export function Sidebar({ role }: SidebarProps) {
   };
 
   return (
-    <div className="flex h-full w-64 flex-col border-r border-slate-200 bg-white">
-      <div className="flex h-16 items-center px-6 border-b border-slate-200">
+    <div className={cn("flex h-full w-64 flex-col border-r border-slate-200 bg-white transition-all", className)}>
+      <div className="flex h-16 items-center justify-between px-6 border-b border-slate-200">
         <Link to="/" className="flex items-center space-x-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-600 text-white">
             <Briefcase className="h-5 w-5" />
           </div>
           <span className="text-xl font-bold text-slate-900">AfriTalent</span>
         </Link>
+        {onClose && (
+          <button onClick={onClose} className="md:hidden p-2 text-slate-500 hover:bg-slate-100 rounded-lg">
+            <X className="h-5 w-5" />
+          </button>
+        )}
       </div>
 
       <div className="flex-1 overflow-y-auto px-3 py-4">

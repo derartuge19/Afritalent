@@ -65,7 +65,7 @@ export function SkillsAnalyticsPage() {
 
   if (loading) {
     return (
-      <DashboardLayout role="seeker">
+      <DashboardLayout role="user">
         <div className="flex items-center justify-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
         </div>
@@ -74,7 +74,7 @@ export function SkillsAnalyticsPage() {
   }
 
   return (
-    <DashboardLayout role="seeker">
+    <DashboardLayout role="user">
       <div className="space-y-6">
         {/* Header */}
         <div>

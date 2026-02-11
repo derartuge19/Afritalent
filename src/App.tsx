@@ -11,7 +11,7 @@ import { LoginPage } from './pages/auth/LoginPage';
 import { RegisterPage } from './pages/auth/RegisterPage';
 import { JobsPage } from './pages/JobsPage';
 import { JobDetailPage } from './pages/JobDetailPage';
-import { SeekerDashboard } from './pages/SeekerDashboard';
+import { UserDashboard } from './pages/UserDashboard';
 import { EmployerDashboard } from './pages/EmployerDashboard';
 import { AdminDashboard } from './pages/AdminDashboard';
 import { PostJobPage } from './pages/PostJobPage';
@@ -22,13 +22,15 @@ import { AIScreeningPage } from './pages/employer/AIScreeningPage';
 import { AnalyticsPage } from './pages/employer/AnalyticsPage';
 import { CompanyProfilePage } from './pages/employer/CompanyProfilePage';
 import { SettingsPage } from './pages/employer/SettingsPage';
-// Seeker Pages
-import { ApplicationsPage } from './pages/seeker/ApplicationsPage';
-import { SavedJobsPage } from './pages/seeker/SavedJobsPage';
-import { CVBuilderPage } from './pages/seeker/CVBuilderPage';
-import { SkillsAnalyticsPage } from './pages/seeker/SkillsAnalyticsPage';
-import { CareerGuidancePage } from './pages/seeker/CareerGuidancePage';
-import { SeekerSettingsPage } from './pages/seeker/SeekerSettingsPage';
+import { InterviewsPage as EmployerInterviewsPage } from './pages/employer/InterviewsPage';
+// User Pages
+import { ApplicationsPage } from './pages/user/ApplicationsPage';
+import { SavedJobsPage } from './pages/user/SavedJobsPage';
+import { CVBuilderPage } from './pages/user/CVBuilderPage';
+import { SkillsAnalyticsPage } from './pages/user/SkillsAnalyticsPage';
+import { CareerGuidancePage } from './pages/user/CareerGuidancePage';
+import { UserSettingsPage } from './pages/user/UserSettingsPage';
+import { InterviewsPage as SeekerInterviewsPage } from './pages/seeker/InterviewsPage';
 // Admin Pages
 import { UsersPage } from './pages/admin/UsersPage';
 import { JobsManagementPage } from './pages/admin/JobsManagementPage';
@@ -54,15 +56,17 @@ export function App() {
             <Route element={<ProtectedRoute allowedRoles={['seeker']} />}>
               <Route path="/jobs" element={<JobsPage />} />
               <Route path="/jobs/:id" element={<JobDetailPage />} />
-              
-              <Route path="/seeker/dashboard" element={<SeekerDashboard />} />
-              <Route path="/seeker/applications" element={<ApplicationsPage />} />
-              <Route path="/seeker/saved" element={<SavedJobsPage />} />
-              <Route path="/seeker/cv-builder" element={<CVBuilderPage />} />
-              <Route path="/seeker/skills" element={<SkillsAnalyticsPage />} />
-              <Route path="/seeker/career" element={<CareerGuidancePage />} />
-              <Route path="/seeker/settings" element={<SeekerSettingsPage />} />
+
+              <Route path="/user/dashboard" element={<UserDashboard />} />
+              <Route path="/user/applications" element={<ApplicationsPage />} />
+              <Route path="/user/saved" element={<SavedJobsPage />} />
+              <Route path="/user/cv-builder" element={<CVBuilderPage />} />
+              <Route path="/user/skills" element={<SkillsAnalyticsPage />} />
+              <Route path="/user/career" element={<CareerGuidancePage />} />
+              <Route path="/user/interviews" element={<SeekerInterviewsPage />} />
+              <Route path="/user/settings" element={<UserSettingsPage />} />
             </Route>
+
 
             {/* Protected Routes - Employer */}
             <Route element={<ProtectedRoute allowedRoles={['employer']} />}>
@@ -73,6 +77,7 @@ export function App() {
               <Route path="/employer/screening" element={<AIScreeningPage />} />
               <Route path="/employer/analytics" element={<AnalyticsPage />} />
               <Route path="/employer/company" element={<CompanyProfilePage />} />
+              <Route path="/employer/interviews" element={<EmployerInterviewsPage />} />
               <Route path="/employer/settings" element={<SettingsPage />} />
             </Route>
 

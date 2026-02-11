@@ -18,7 +18,11 @@ import {
   'lucide-react';
 import { JobCard } from '../components/jobs/JobCard';
 import { getJobs } from '../lib/api';
+import { useAuth } from '../context/AuthContext';
+
 export function LandingPage() {
+  const { isAuthenticated, user } = useAuth();
+
   const stats = [
     {
       label: 'Jobs Matched',
@@ -43,6 +47,17 @@ export function LandingPage() {
 
   const [featuredJobs, setFeaturedJobs] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
+
+
+  // React.useEffect(() => {
+  //   if (isAuthenticated && user) {
+  //     if (user.role === 'employer') {
+  //       navigate('/employer/dashboard');
+  //     } else {
+  //       navigate('/user/dashboard');
+  //     }
+  //   }
+  // }, [isAuthenticated, user, navigate]);
 
   React.useEffect(() => {
     const fetchJobs = async () => {
@@ -153,7 +168,7 @@ export function LandingPage() {
               duration: 0.5,
               delay: 0.1
             }}
-            className="text-4xl font-bold tracking-tight text-white sm:text-6xl lg:text-7xl">
+            className="text-3xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl">
 
             Connecting Africa's Talent
             <br />
@@ -318,7 +333,7 @@ export function LandingPage() {
             <div>
               <span className="inline-flex items-center gap-2 rounded-full bg-primary-100 px-3 py-1 text-sm font-medium text-primary-700 mb-4">
                 <Users className="h-4 w-4" />
-                For Job Seekers
+                For Users
               </span>
               <h2 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl mb-6">
                 Your Career Journey Starts Here
@@ -338,7 +353,7 @@ export function LandingPage() {
                   )}
               </div>
               <div className="mt-8">
-                <Link to="/seeker/dashboard">
+                <Link to={isAuthenticated ? (user?.role === 'employer' ? '/employer/dashboard' : '/user/dashboard') : '/register?role=seeker'}>
                   <Button size="lg">Create Your Profile</Button>
                 </Link>
               </div>
@@ -429,7 +444,7 @@ export function LandingPage() {
             connect talent with opportunity.
           </p>
           <div className="mt-10 flex flex-col sm:flex-row justify-center gap-4">
-            <Link to="/seeker/dashboard">
+            <Link to={isAuthenticated ? (user?.role === 'employer' ? '/employer/dashboard' : '/user/dashboard') : '/register?role=seeker'}>
               <Button
                 size="lg"
                 className="w-full sm:w-auto bg-white text-primary-600 hover:bg-primary-50">
@@ -437,7 +452,7 @@ export function LandingPage() {
                 Create Free Profile
               </Button>
             </Link>
-            <Link to="/employer/post-job">
+            <Link to={isAuthenticated ? (user?.role === 'employer' ? '/employer/post-job' : '/user/dashboard') : '/register?role=employer'}>
               <Button
                 size="lg"
                 variant="outline"

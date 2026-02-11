@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Layout } from '../../components/layout/Layout';
 import { Button } from '../../components/common/Button';
 import { api } from '../../lib/api';
@@ -8,7 +8,11 @@ import { Mail, Lock, AlertCircle, Building2, User } from 'lucide-react';
 type UserRole = 'seeker' | 'employer';
 
 export function RegisterPage() {
-    const [role, setRole] = useState<UserRole>('seeker');
+    const location = useLocation();
+    const queryParams = new URLSearchParams(location.search);
+    const initialRole = (queryParams.get('role') as UserRole) || 'seeker';
+
+    const [role, setRole] = useState<UserRole>(initialRole);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
@@ -62,7 +66,7 @@ export function RegisterPage() {
                                 }`}
                         >
                             <User className="h-6 w-6 mb-2" />
-                            <span className="font-medium text-sm">Job Seeker</span>
+                            <span className="font-medium text-sm">User</span>
                         </button>
                         <button
                             onClick={() => setRole('employer')}
