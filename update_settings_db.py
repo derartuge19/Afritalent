@@ -2,7 +2,7 @@ import sys
 import os
 from sqlalchemy import create_engine, text
 
-# Add current directory to path so we can import backend
+# Add current directory to path so we can import backend 
 sys.path.append(os.getcwd())
 
 from backend.app.config import settings
